@@ -1,27 +1,32 @@
-import os
 import pefile
 from PIL import Image
 import numpy as np
+from sklearn.svm import SVC
+from sklearn.preprocessing import StandardScaler
 import joblib
 
+svm_model = SVC(kernel='linear')
 
-model_file = '/app/svm_model.pkl'
-if not os.path.isfile(model_file):
-    print(f"{model_file} does not exist.")
-    exit(1)
-else: 
-	print("abrakadabra")
-
-model = joblib.load(model_file)
-
-
-pe = pefile.PE('putty.exe')
+pe = pefile.PE('/app/putty.exe')  
 raw_bytes = bytes(pe.__data__)
 image = Image.frombytes('L', (32, 32), raw_bytes)
 
 normalized_image = np.array(image) / 255.0
-reshaped_image = normalized_image.reshape(1, 32, 32, 1)
+reshaped_image = normalized_image.reshape(1, -1)
+svm_model = joblib.load('/app/svm_model.pkl') 
 
-predictions = model.predict(reshaped_image)
+scaler = StandardScaler()
+scaled_image = scaler.fit_transform(reshaped_image)
+predictions = svm_model.predict(scaled_image)
 
-print(predictions)
+if predictions == 1:
+    print("It is certainly a virus.")
+elif predictions >= 0.75:
+    print("Most likely it is a virus.")
+elif predictions >= 0.5:
+    print("It is somewhat likely to be a virus.")
+elif predictions >= 0.25:
+    print("It is unlikely to be a virus.")
+else:
+    print("It is highly unlikely to be a virus.")
+
