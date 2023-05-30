@@ -2,20 +2,20 @@ FROM ubuntu:22.04
 
 WORKDIR /app
 
+
+RUN apt-get update \
+    && apt-get install -y python3 \
+    && apt-get install -y python3-pip
+
 COPY requirements.txt .
 COPY svm_model.pkl .
+COPY fol /app/fol
+COPY putty.exe .
 COPY Check_V.py .
 
-RUN apt-get update && \
-    apt-get install -y python3 python3-pip && \
-    rm -rf /var/lib/apt/lists/*
+RUN pip3 install --upgrade pip && \
+    pip3 install -r requirements.txt
 
-ENV PATH="/usr/bin/python3:${PATH}"
 
-RUN if [ -f svm_model.pkl ]; then echo "File exists!"; else echo "File does not exist!"; fi
-
-RUN python3 -m pip install --upgrade pip && \
-    python3 -m pip install -r requirements.txt
-
-CMD ["python", "Check_V.py"]
-
+CMD ["python3", "fol"]
+CMD ["python3", "Check_V.py"]
